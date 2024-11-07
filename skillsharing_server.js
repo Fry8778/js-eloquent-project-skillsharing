@@ -1,26 +1,38 @@
-var {createServer} = require("http");
-var Router = require("./router");
-var ecstatic = require("ecstatic");
+const { createServer } = require("http");
+const fs = require("fs");
+const Router = require("./router");
+const ecstatic = require("ecstatic");
+const DATA_FILE = "./talksData.json";
 
-var router = new Router();
-var defaultHeaders = {"Content-Type": "text/plain"};
+const router = new Router();
+const defaultHeaders = { "Content-Type": "text/plain" };
+
+function saveData(data) {
+  fs.writeFileSync(DATA_FILE, JSON.stringify(data), "utf8");
+}
+
+function loadData() {
+  if (fs.existsSync(DATA_FILE)) {
+    const data = fs.readFileSync(DATA_FILE, "utf8");
+    return JSON.parse(data);
+  }
+  return {};
+}
 
 var SkillShareServer = class SkillShareServer {
-  constructor(talks) {
-    this.talks = talks;
+  constructor() {
+    this.talks = loadData(); // Загружаем данные при запуске
     this.version = 0;
     this.waiting = [];
 
-    let fileServer = ecstatic({root: "./public"});
+    let fileServer = ecstatic({ root: "./public" });
     this.server = createServer((request, response) => {
       let resolved = router.resolve(this, request);
       if (resolved) {
         resolved.catch(error => {
           if (error.status != null) return error;
-          return {body: String(error), status: 500};
-        }).then(({body,
-                  status = 200,
-                  headers = defaultHeaders}) => {
+          return { body: String(error), status: 500 };
+        }).then(({ body, status = 200, headers = defaultHeaders }) => {
           response.writeHead(status, headers);
           response.end(body);
         });
@@ -29,14 +41,25 @@ var SkillShareServer = class SkillShareServer {
       }
     });
   }
+
   start(port) {
     this.server.listen(port);
   }
+
   stop() {
     this.server.close();
   }
-}
 
+  updated() {
+    this.version++;
+    let response = this.talkResponse();
+    this.waiting.forEach(resolve => resolve(response));
+    this.waiting = [];
+    saveData(this.talks); // Сохраняем данные на диск после обновления
+  }
+};
+
+// Далее код для добавления маршрутов 
 
 this.server = createServer((request, response) => {
   console.log(`Request: ${request.method} ${request.url}`); // Логирование
