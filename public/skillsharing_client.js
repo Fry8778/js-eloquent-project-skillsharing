@@ -64,8 +64,40 @@ function elt(type, props, ...children) {
   return dom;
 }
 
+// Функция для обновления поля комментария без потери содержимого и фокуса
+function updateCommentsUI(talkElement, comments) {
+  // Найти поле для ввода нового комментария
+  const commentInput = talkElement.querySelector(".new-comment");
+  
+  // Сохранить текущий текст и фокус
+  const previousText = commentInput ? commentInput.value : "";
+  const hasFocus = document.activeElement === commentInput;
+  
+  // Перерисовать комментарии
+  renderComments(talkElement, comments);
+  
+  // Восстановить текст и фокус
+  const newCommentInput = talkElement.querySelector(".new-comment");
+  if (newCommentInput) {
+    newCommentInput.value = previousText; // Восстановить текст
+    if (hasFocu s) newCommentInput.focus(); // Восстановить фокус
+  }
+}
+
+// Функция для рендеринга комментариев
+function renderComments(talkElement, comments) {
+  const commentsContainer = talkElement.querySelector(".comments");
+  commentsContainer.innerHTML = ""; // Очистить старые комментарии
+  comments.forEach(comment => {
+    const commentNode = document.createElement("div");
+    commentNode.textContent = `${comment.author}: ${comment.message}`;
+    commentsContainer.appendChild(commentNode);
+  });
+}
+
+// Изменение функции renderTalk для использования updateCommentsUI
 function renderTalk(talk, dispatch) {
-  return elt(
+  let talkElement = elt(
     "section", {className: "talk"},
     elt("h2", null, talk.title, " ", elt("button", {
       type: "button",
@@ -73,21 +105,24 @@ function renderTalk(talk, dispatch) {
         dispatch({type: "deleteTalk", talk: talk.title});
       }
     }, "Delete")),
-    elt("div", null, "by ",
-        elt("strong", null, talk.presenter)),
+    elt("div", null, "by ", elt("strong", null, talk.presenter)),
     elt("p", null, talk.summary),
-    ...talk.comments.map(renderComment),
+    elt("div", {className: "comments"}, ...talk.comments.map(renderComment)),
     elt("form", {
       onsubmit(event) {
         event.preventDefault();
         let form = event.target;
-        dispatch({type: "newComment",
-                  talk: talk.title,
-                  message: form.elements.comment.value});
+        dispatch({type: "newComment", talk: talk.title, message: form.elements.comment.value});
         form.reset();
       }
-    }, elt("input", {type: "text", name: "comment"}), " ",
-       elt("button", {type: "submit"}, "Add comment")));
+    }, elt("input", {type: "text", name: "comment", className: "new-comment"}), " ",
+       elt("button", {type: "submit"}, "Add comment"))
+  );
+
+  // Обновление комментариев при каждом вызове функции
+  updateCommentsUI(talkElement, talk.comments);
+
+  return talkElement;
 }
 
 function renderComment(comment) {
