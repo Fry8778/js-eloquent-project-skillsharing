@@ -80,7 +80,7 @@ function updateCommentsUI(talkElement, comments) {
   const newCommentInput = talkElement.querySelector(".new-comment");
   if (newCommentInput) {
     newCommentInput.value = previousText; // Восстановить текст
-    if (hasFocu s) newCommentInput.focus(); // Восстановить фокус
+    if (hasFocus) newCommentInput.focus(); // Восстановить фокус
   }
 }
 

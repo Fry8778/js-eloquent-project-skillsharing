@@ -5,4 +5,26 @@
 
 <h1>Skill Sharing</h1>
 
+<!-- Шаблон для тем -->
+<template id="talk-template">
+  <div class="talk">
+    <h2>
+      <span template-text="title"></span>
+      <button>Delete</button>
+    </h2>
+    <div>by <strong template-text="presenter"></strong></div>
+    <p template-text="summary"></p>
+    <div>
+      <div template-repeat="comments">
+        <span template-text="author"></span>: 
+        <span template-text="message"></span>
+      </div>
+    </div>
+    <form>
+      <input type="text" name="comment" class="new-comment">
+      <button type="submit">Add comment</button>
+    </form>
+  </div>
+</template>
+
 <script src="./skillsharing_client.js"></script>
